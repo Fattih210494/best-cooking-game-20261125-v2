@@ -75,7 +75,7 @@ function addPlateVisual(G, item) {
   const slot = G.passPlates.find(p => p.items.length === 0);
   if (!slot) return;
   const mesh = foodMesh(item, 1.15);
-  mesh.position.set(-9.9, 1.22, 0.4 + slot.z);
+  mesh.position.set(-9.9, 1.22, 1.4 + slot.z);
   G.scene.add(mesh);
   slot.items.push(item);
   G.plateVisuals.push(mesh);
@@ -162,6 +162,7 @@ function serveCustomer(G, c) {
   clearPlateVisual(G);
   G.plate = []; G.plateDish = null;
   happyBubble(G, c);
+  if (G.hud && G.hud.bigBubbleNow) G.hud.bigBubbleNow('I love this dish too!', performance.now() / 1000);
   sfx.sfxServe();
   toast(G, `+${gain} • ${dish.name} disajikan! (combo x${Math.min(mult, 5)})`);
   G.servedDish = servedDish;

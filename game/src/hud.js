@@ -8,6 +8,13 @@ let lastSig = '';
 let lastCookSig = '';
 let toastTimer = null;
 
+// Big center speech bubble (like the reference: "I love this dish too!").
+// Always visible while playing, text rotates every 5s; a serve swaps it
+// to a happy line immediately.
+const BIG_LINES = ['I love this dish too!', 'Thank you for waiting!', 'Mmm, wangi banget!', 'Enak banget!', 'Pelayan! Pesanan saya mana?'];
+let bigIdx = 0;
+let bigNextAt = 0;
+
 export function initHud(G) {
   els = {
     timer: document.getElementById('timer'),
@@ -20,12 +27,31 @@ export function initHud(G) {
     tickets: document.getElementById('tickets'),
     cookList: document.getElementById('cookList'),
     toast: document.getElementById('toast'),
+    bigBubble: document.getElementById('bigBubble'),
     title: document.getElementById('titleScreen'),
     end: document.getElementById('endScreen'),
     endStats: document.getElementById('endStats'),
   };
   document.getElementById('startBtn').addEventListener('click', () => G.startGame());
   document.getElementById('againBtn').addEventListener('click', () => G.restartGame());
+}
+
+export function bigBubbleNow(line, nowSec) {
+  if (!els.bigBubble) return;
+  els.bigBubble.textContent = line;
+  els.bigBubble.style.display = 'block';
+  bigNextAt = (nowSec || 0) + 5;
+}
+
+export function updateBigBubble(G, nowSec) {
+  if (!els.bigBubble) return;
+  if (G.state !== 'playing') { els.bigBubble.style.display = 'none'; return; }
+  if (nowSec >= bigNextAt) {
+    els.bigBubble.textContent = BIG_LINES[bigIdx % BIG_LINES.length];
+    bigIdx++;
+    bigNextAt = nowSec + 5;
+  }
+  els.bigBubble.style.display = 'block';
 }
 
 export function toast(msg) {

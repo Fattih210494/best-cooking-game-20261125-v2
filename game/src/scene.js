@@ -122,51 +122,51 @@ export function buildRoom(G) {
   G.stations = {};
   G.crates = {};
 
-  // ---- floor & walls (pixel-art wooden planks) ----
+  // ---- floor & walls: warm tiles FULL-BLEED edge-to-edge, no rug, no dark gaps ----
   const floorTex = pixelTex('pixel/floor.png');
   floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
-  floorTex.repeat.set(3, 2);
+  floorTex.repeat.set(4, 3);
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(23, 14.5),
+    new THREE.PlaneGeometry(27, 17),
     new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.9 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   S.add(floor);
-  const backWall = box(23, 3.2, 0.5, 0x7c4a26, 0, 1.6, -7.0);
+  // thin back-wall strip only (mostly hidden behind the top bar)
+  const backWall = box(27, 2.4, 0.5, 0x7c4a26, 0, 1.2, -7.4);
   backWall.castShadow = false; S.add(backWall);
-  const leftWall = box(0.5, 3.2, 14.5, 0x6b3f20, -11.4, 1.6, 0);
-  leftWall.castShadow = false; S.add(leftWall);
-  const rightWall = box(0.5, 3.2, 14.5, 0x6b3f20, 11.4, 1.6, 0);
-  rightWall.castShadow = false; S.add(rightWall);
-  // warm rug under the dining area
-  const rug = new THREE.Mesh(new THREE.PlaneGeometry(15.5, 9.5),
-    new THREE.MeshStandardMaterial({ color: 0x8a2f28, roughness: 1 }));
-  rug.rotation.x = -Math.PI / 2; rug.position.set(1.2, 0.02, 1.2); rug.receiveShadow = true;
-  S.add(rug);
-  const rugIn = new THREE.Mesh(new THREE.PlaneGeometry(14.3, 8.3),
-    new THREE.MeshStandardMaterial({ color: 0xa8443a, roughness: 1 }));
-  rugIn.rotation.x = -Math.PI / 2; rugIn.position.set(1.2, 0.035, 1.2); rugIn.receiveShadow = true;
-  S.add(rugIn);
+  // shelf with goods on the back wall + fridge + menu board
+  const shelf = box(10, 0.14, 0.7, 0x8a5a30, 0, 2.1, -7.0);
+  S.add(shelf);
+  const shelfGoods = [0xd9382b, 0x58b368, 0xe8a13c, 0x5a9fd4, 0x9b59d0, 0xe0aa5e];
+  shelfGoods.forEach((col, i) => S.add(box(0.7, 0.7, 0.5, col, -3.6 + i * 1.45, 2.5, -7.0)));
+  const fridge = box(1.9, 3.0, 1.0, 0x9fc4d4, -7.6, 1.5, -6.8, 0.4);
+  fridge.material.metalness = 0.3;
+  S.add(fridge);
+  S.add(box(0.1, 0.9, 0.08, 0x3a3a3a, -6.9, 1.6, -6.25, 0.4));
+  const menu = box(3.4, 1.6, 0.1, 0x2e2018, 3.5, 2.2, -7.1, 0.7);
+  S.add(menu);
+  const menuLab = makeLabel('MENU', 0.9, '#ffd23c', '#2e2018'); menuLab.position.set(3.5, 2.5, -7.0); S.add(menuLab);
 
-  // ---- kitchen counter along the back wall (low enough to clear the HUD) ----
-  const counter = box(21, 1.0, 1.3, 0x8a5a30, 0, 0.5, -4.2);
-  S.add(counter);
-  const counterTop = box(21, 0.12, 1.4, 0x4a4a55, 0, 1.06, -4.2, 0.4);
-  counterTop.material.metalness = 0.5;
-  S.add(counterTop);
+  // ---- LEFT EDGE, column 1: dark equipment counter under crates + stations ----
+  const equip = box(1.5, 1.0, 13.5, 0x8a5a30, -11.6, 0.5, 0.25);
+  S.add(equip);
+  const equipTop = box(1.6, 0.12, 13.6, 0x4a4a55, -11.6, 1.06, 0.25, 0.4);
+  equipTop.material.metalness = 0.5;
+  S.add(equipTop);
 
-  // ---- ingredient crates on the kitchen counter ----
+  // ---- ingredient crates on the equipment counter (top -> bottom) ----
   const crateDefs = [
-    { ing: 'tomato', label: 'Tomat', x: -8.6, color: 0xd9382b },
-    { ing: 'lettuce', label: 'Selada', x: -6.6, color: 0x58b368 },
-    { ing: 'fish', label: 'Ikan', x: -4.6, color: 0x5a9fd4 },
-    { ing: 'bread', label: 'Roti', x: -2.6, color: 0xe0aa5e },
-    { ing: 'patty', label: 'Patty', x: -0.6, color: 0x7a4a22 },
+    { ing: 'tomato', label: 'Tomat', x: -11.6, z: -5.0, color: 0xd9382b },
+    { ing: 'lettuce', label: 'Selada', x: -11.6, z: -3.8, color: 0x58b368 },
+    { ing: 'fish', label: 'Ikan', x: -11.6, z: -2.6, color: 0x5a9fd4 },
+    { ing: 'bread', label: 'Roti', x: -11.6, z: -1.4, color: 0xe0aa5e },
+    { ing: 'patty', label: 'Patty', x: -11.6, z: -0.2, color: 0x7a4a22 },
   ];
   for (const cd of crateDefs) {
     const grp = new THREE.Group();
-    grp.position.set(cd.x, 1.12, -4.2);
+    grp.position.set(cd.x, 1.12, cd.z);
     const base = box(1.5, 0.5, 1.1, 0x9a6a35, 0, 0.25, 0);
     grp.add(base);
     // pixel-art food pictures lying on top of the crate
@@ -183,13 +183,13 @@ export function buildRoom(G) {
     G.clickables.push(grp);
   }
 
-  // ---- cooking stations on the kitchen counter ----
+  // ---- cooking stations on the equipment counter (below the crates) ----
   const stationDefs = [
-    { id: 'board', label: 'Talenan', x: 2.2, build: g => {
+    { id: 'board', label: 'Talenan', x: -11.6, z: 1.2, build: g => {
       g.add(box(1.6, 0.14, 1.0, 0xd9b380, 0, 0.08, 0));
       g.add(box(0.5, 0.1, 0.7, 0xe8e8e8, -0.35, 0.18, 0)); // knife hint
     } },
-    { id: 'stove', label: 'Kompor', x: 5.0, build: g => {
+    { id: 'stove', label: 'Kompor', x: -11.6, z: 3.0, build: g => {
       g.add(box(1.7, 0.5, 1.1, 0x2e2e34, 0, 0.25, 0, 0.4));
       g.add(cyl(0.42, 0.42, 0.08, 0x111116, -0.4, 0.54, 0));
       g.add(cyl(0.42, 0.42, 0.08, 0x111116, 0.4, 0.54, 0));
@@ -197,7 +197,7 @@ export function buildRoom(G) {
       flame.material = new THREE.MeshStandardMaterial({ color: 0xff8c2a, emissive: 0xff6a00, emissiveIntensity: 1.2 });
       g.add(flame);
     } },
-    { id: 'pot', label: 'Panci Sup', x: 7.8, build: g => {
+    { id: 'pot', label: 'Panci Sup', x: -11.6, z: 4.8, build: g => {
       g.add(cyl(0.62, 0.55, 0.7, 0x3a3a44, 0, 0.35, 0, 16));
       const soup = cyl(0.5, 0.5, 0.06, 0xe86a2a, 0, 0.68, 0);
       soup.material = new THREE.MeshStandardMaterial({ color: 0xe86a2a, emissive: 0x903a00, emissiveIntensity: 0.35 });
@@ -206,7 +206,7 @@ export function buildRoom(G) {
   ];
   for (const sd of stationDefs) {
     const grp = new THREE.Group();
-    grp.position.set(sd.x, 1.12, -4.2);
+    grp.position.set(sd.x, 1.12, sd.z);
     sd.build(grp);
     const lab = makeLabel(sd.label, 0.85); lab.position.set(0, 1.45, 0); grp.add(lab);
     // progress bar above the station
@@ -224,19 +224,24 @@ export function buildRoom(G) {
     G.clickables.push(grp);
   }
 
-  // ---- long cream serving counter (the pass) on the left ----
+  // ---- long cream serving counter (the pass) on the left, full edge ----
   const pass = new THREE.Group();
-  pass.position.set(-9.9, 0, 0.4);
-  pass.add(box(1.6, 1.0, 7.2, 0x8a5a30, 0, 0.5, 0));
-  pass.add(box(1.8, 0.12, 7.4, 0xe8dcc0, 0, 1.06, 0, 0.5));
-  // three white plates waiting on the pass
-  const plateZ = [-2.2, 0, 2.2];
+  pass.position.set(-9.9, 0, 1.4);
+  pass.add(box(1.6, 1.0, 12.5, 0x8a5a30, 0, 0.5, 0));
+  pass.add(box(1.8, 0.12, 12.7, 0xe8dcc0, 0, 1.06, 0, 0.5));
+  // three white plates waiting on the pass + two decorative empty plates
+  const plateZ = [-1.2, 0, 1.2];
   G.passPlates = [];
   for (const pz of plateZ) {
     const plate = cyl(0.62, 0.5, 0.08, 0xffffff, 0, 1.16, pz, 20);
     plate.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
     pass.add(plate);
     G.passPlates.push({ mesh: plate, z: pz, items: [] });
+  }
+  for (const pz of [-5.0, -3.8]) {
+    const deco = cyl(0.5, 0.42, 0.08, 0xffffff, 0, 1.16, pz, 20);
+    deco.material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
+    pass.add(deco);
   }
   const passLab = makeLabel('MEJA SAJI', 1.0); passLab.position.set(0, 2.1, 0); pass.add(passLab);
   pass.traverse(o => { o.userData = { kind: 'pass' }; });
@@ -245,10 +250,10 @@ export function buildRoom(G) {
   G.clickables.push(pass);
   G.passGroup = pass;
 
-  // ---- dining tables + chairs ----
+  // ---- dining tables + chairs: 8 tables, 4 columns x 2 rows, spread out ----
   const tableDefs = [
-    { x: -4.5, z: -0.7 }, { x: 0.5, z: -0.7 }, { x: 5.5, z: -0.7 },
-    { x: -2.0, z: 3.7 }, { x: 3.5, z: 3.7 },
+    { x: -6.5, z: -0.6 }, { x: -1.5, z: -0.6 }, { x: 3.5, z: -0.6 }, { x: 8.5, z: -0.6 },
+    { x: -6.5, z: 3.6 }, { x: -1.5, z: 3.6 }, { x: 3.5, z: 3.6 }, { x: 8.5, z: 3.6 },
   ];
   for (const td of tableDefs) {
     const t = new THREE.Group();
@@ -291,32 +296,28 @@ export function buildRoom(G) {
     S.add(b);
   }
 
-  // ---- potted plants (pixel-art sprites) ----
-  for (const [px, pz] of [[-5.2, 6.1], [8.8, 5.7], [9.9, -4.6]]) {
+  // ---- potted plants in a row along the bottom (like the reference) ----
+  for (const [px, pz] of [[-5.0, 6.5], [-2.8, 6.5], [4.2, 6.5], [6.5, 6.5], [9.9, -4.6]]) {
     const p = pixelSprite('pixel/plant.png', 1.7, 1.7);
     p.position.set(px, 0.85, pz);
     S.add(p);
   }
 
-  // ---- chef standing at the kitchen (pixel-art sprite) ----
+  // ---- cashier desk (wooden counter + register) at the bottom ----
+  const cash = new THREE.Group();
+  cash.position.set(0.5, 0, 5.9);
+  cash.add(box(3.4, 1.0, 1.2, 0x8a5a30, 0, 0.5, 0));
+  cash.add(box(3.6, 0.12, 1.3, 0xd9b380, 0, 1.06, 0));
+  cash.add(box(0.7, 0.5, 0.5, 0x2e2e34, -0.9, 1.35, 0, 0.4)); // register body
+  const regScreen = box(0.55, 0.4, 0.06, 0xffd23c, -0.9, 1.65, -0.15, 0.4);
+  regScreen.material = new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xcc9900, emissiveIntensity: 0.8 });
+  cash.add(regScreen);
+  cash.add(box(0.5, 0.3, 0.4, 0xe8e8e8, 0.7, 1.28, 0)); // receipt stack / coins
+  const cashLab = makeLabel('KASIR', 0.8); cashLab.position.set(0, 2.2, 0); cash.add(cashLab);
+  S.add(cash);
+
+  // ---- chef standing at the back-right (pixel-art sprite) ----
   const chef = pixelSprite('pixel/chef.png', 2.0, 3.0);
   chef.position.set(10.4, 1.5, -4.2);
   S.add(chef);
-
-  // ---- pendant lamps over the dining area ----
-  for (const [lx, lz] of [[-2, -1.8], [3, -1.8], [0.8, 3.0]]) {
-    const cord = cyl(0.03, 0.03, 1.6, 0x222222, lx, 2.4, lz, 6);
-    S.add(cord);
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.4, 16, 1, true),
-      new THREE.MeshStandardMaterial({ color: 0xd9a441, roughness: 0.5, metalness: 0.4, side: THREE.DoubleSide }));
-    shade.position.set(lx, 1.6, lz); shade.castShadow = true; S.add(shade);
-    const bulb = sph(0.14, 0xffe9a0, lx, 1.45, lz);
-    bulb.material = new THREE.MeshStandardMaterial({ color: 0xffe9a0, emissive: 0xffc94d, emissiveIntensity: 2 });
-    S.add(bulb);
-  }
-
-  // ---- menu board on the back wall ----
-  const menu = box(3.4, 1.6, 0.1, 0x2e2018, -9.0, 2.2, -6.7, 0.7);
-  S.add(menu);
-  const menuLab = makeLabel('MENU', 0.9, '#ffd23c', '#2e2018'); menuLab.position.set(-9.0, 2.5, -6.55); S.add(menuLab);
 }

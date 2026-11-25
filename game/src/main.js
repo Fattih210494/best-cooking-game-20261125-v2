@@ -28,8 +28,8 @@ document.getElementById('app').appendChild(renderer.domElement);
 G.renderer = renderer;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a1a0e);
-scene.fog = new THREE.Fog(0x2a1a0e, 40, 70);
+scene.background = new THREE.Color(0x6b4a2f);
+scene.fog = new THREE.Fog(0x6b4a2f, 40, 70);
 G.scene = scene;
 
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
@@ -65,7 +65,7 @@ warm2.position.set(3, 4.5, 3.2); scene.add(warm2);
 
 // ---------- build the room & people ----------
 buildRoom(G);
-createCustomers(G, 7);
+createCustomers(G, 12);
 createWaiter(G);
 hud.initHud(G);
 G.hud = hud;
@@ -81,7 +81,7 @@ G.startGame = () => {
 };
 G.restartGame = () => {
   for (const c of [...G.customers]) removeCustomer(G, c);
-  createCustomers(G, 7);
+  createCustomers(G, 12);
   initCooking(G);
   G.state = 'playing';
   hud.hideTitle();
@@ -138,7 +138,7 @@ function animate() {
   const now = clock.elapsedTime;
   if (G.state === 'playing') updateCooking(G, dt);
   if (G.state === 'playing' || G.state === 'title') updatePeople(G, dt, now);
-  if (G.state === 'playing') hud.refresh(G);
+  if (G.state === 'playing') { hud.refresh(G); hud.updateBigBubble(G, now); }
   renderer.render(scene, camera);
 }
 animate();
@@ -162,7 +162,7 @@ window.__dapur = {
     pos: { x: s.group.position.x, z: s.group.position.z },
   }])),
   crates: () => Object.fromEntries(Object.entries(G.crates).map(([ing, g]) => [ing, { x: g.position.x, z: g.position.z }])),
-  passPos: () => ({ x: -9.9, z: 0.4 }),
+  passPos: () => ({ x: -9.9, z: 1.4 }),
   plate: () => ({ items: [...G.plate], dish: G.plateDish }),
   hand: () => [...G.hand],
   score: () => ({ score: G.score, coins: G.coins, combo: G.combo, hearts: G.hearts, served: G.served, timeLeft: Math.round(G.timeLeft) }),
@@ -174,7 +174,7 @@ window.__dapur = {
       if (G.state === 'playing') updateCooking(G, 0.05);
       updatePeople(G, 0.05, performance.now() / 1000);
     }
-    if (G.state === 'playing') hud.refresh(G);
+    if (G.state === 'playing') { hud.refresh(G); hud.updateBigBubble(G, performance.now() / 1000); }
     renderer.render(scene, camera);
   },
 };

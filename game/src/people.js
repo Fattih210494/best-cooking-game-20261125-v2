@@ -67,49 +67,57 @@ export function removeCustomer(G, c) {
   G.scene.remove(c.group);
 }
 
-// The waiter: pixel-art sprite, white shirt + dark apron, walks a loop
-// between the tables with a 4-frame walk cycle.
+// Three walkers in the aisles (like the reference: busy dining room):
+// 2 waiters (white shirt, 4-frame walk cycle) on the perimeter loop +
+// 1 walking customer (bobbing) on the center aisle between the table rows.
 export function createWaiter(G) {
-  const grp = new THREE.Group();
-  const sp = pixelSprite(WAITER_FRAMES[0], 2.0, 3.0);
-  sp.position.y = 1.5;
-  grp.add(sp);
-  grp.position.set(-7, 0, -2.8);
-  G.scene.add(grp);
   const frameTex = WAITER_FRAMES.map(pixelTex);
-  G.waiter = {
-    group: grp, sprite: sp, frameTex, frame: 0,
-    path: [
-      new THREE.Vector3(-7, 0, -2.8), new THREE.Vector3(8.5, 0, -2.8),
-      new THREE.Vector3(8.5, 0, 5.2), new THREE.Vector3(-7, 0, 5.2),
-    ],
-    seg: 0, t: 0, speed: 1.6, pause: 0, walkPhase: 0,
+  const mk = (sprite, x, z, path, speed, bobOnly) => {
+    const grp = new THREE.Group();
+    const sp = pixelSprite(sprite, 2.0, 3.0);
+    sp.position.y = 1.5;
+    grp.add(sp);
+    grp.position.set(x, 0, z);
+    G.scene.add(grp);
+    return { group: grp, sprite: sp, frameTex, frame: 0, path, seg: 0, t: 0, speed, pause: 0, walkPhase: Math.random() * 6, bobOnly };
   };
+  const loop = [
+    new THREE.Vector3(-8.3, 0, -2.9), new THREE.Vector3(9.2, 0, -2.9),
+    new THREE.Vector3(9.2, 0, 5.4), new THREE.Vector3(-8.3, 0, 5.4),
+  ];
+  G.walkers = [
+    mk(WAITER_FRAMES[0], -8.3, -2.9, loop, 1.6, false),
+    mk(WAITER_FRAMES[2], 9.2, 5.4, loop.map(v => v.clone()), 1.4, false),
+    mk(CUSTOMER_SPRITES[1], -4, 1.2, [new THREE.Vector3(-4, 0, 1.2), new THREE.Vector3(6, 0, 1.2)], 1.2, true),
+  ];
+  G.walkers[1].seg = 2; // second waiter starts on the opposite side
+  G.waiter = G.walkers[0];
 }
 
 function updateWaiter(G, dt) {
-  const w = G.waiter;
-  if (!w) return;
-  if (w.pause > 0) { w.pause -= dt; return; }
-  const a = w.path[w.seg];
-  const b = w.path[(w.seg + 1) % w.path.length];
-  const dx = b.x - a.x, dz = b.z - a.z;
-  const len = Math.hypot(dx, dz);
-  w.t += (w.speed * dt) / len;
-  if (w.t >= 1) {
-    w.t = 0; w.seg = (w.seg + 1) % w.path.length;
-    if (Math.random() < 0.45) w.pause = 1 + Math.random() * 2; // linger at a table
-    return;
-  }
-  const x = a.x + dx * w.t, z = a.z + dz * w.t;
-  w.group.position.set(x, Math.abs(Math.sin(w.walkPhase)) * 0.05, z);
-  w.walkPhase += dt * 9;
-  // swap walk-cycle frame (4 frames, ~8 fps)
-  const frame = Math.floor(w.walkPhase / 1.6) % 4;
-  if (frame !== w.frame) {
-    w.frame = frame;
-    w.sprite.material.map = w.frameTex[frame];
-    w.sprite.material.needsUpdate = true;
+  for (const w of (G.walkers || [])) {
+    if (w.pause > 0) { w.pause -= dt; continue; }
+    const a = w.path[w.seg];
+    const b = w.path[(w.seg + 1) % w.path.length];
+    const dx = b.x - a.x, dz = b.z - a.z;
+    const len = Math.hypot(dx, dz) || 1;
+    w.t += (w.speed * dt) / len;
+    if (w.t >= 1) {
+      w.t = 0; w.seg = (w.seg + 1) % w.path.length;
+      if (Math.random() < 0.45) w.pause = 1 + Math.random() * 2; // linger at a table
+      continue;
+    }
+    const x = a.x + dx * w.t, z = a.z + dz * w.t;
+    w.group.position.set(x, Math.abs(Math.sin(w.walkPhase)) * 0.05, z);
+    w.walkPhase += dt * 9;
+    if (w.bobOnly) continue; // walking customer: just bobs
+    // swap walk-cycle frame (4 frames, ~8 fps)
+    const frame = Math.floor(w.walkPhase / 1.6) % 4;
+    if (frame !== w.frame) {
+      w.frame = frame;
+      w.sprite.material.map = w.frameTex[frame];
+      w.sprite.material.needsUpdate = true;
+    }
   }
 }
 
