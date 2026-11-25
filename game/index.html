@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Dapur Ceria — Game Masak 3D</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #2a1a0e; }
+  body { font-family: 'Trebuchet MS', 'Segoe UI', sans-serif; color: #fff; }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  /* ---------- HUD top bar ---------- */
+  #hud { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between;
+    align-items: flex-start; padding: 8px 10px; pointer-events: none; z-index: 5; gap: 8px; }
+  .panel { background: rgba(30, 18, 8, 0.88); border: 2px solid #c98f3d; border-radius: 10px;
+    padding: 6px 10px; box-shadow: 0 3px 10px rgba(0,0,0,.5); }
+  .panel h2 { color: #ffd23c; font-size: 15px; letter-spacing: 2px; text-shadow: 1px 1px 0 #7a4d00; }
+  #ordersPanel { min-width: 300px; max-width: 46%; }
+  #tickets { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .ticket { background: #fff3d6; color: #4a2c10; border-radius: 8px; padding: 3px 6px; min-width: 76px;
+    border-bottom: 3px solid #d9a441; font-size: 11px; line-height: 1.2; }
+  .ticket b { display: block; font-size: 12px; }
+  .ticket img.tic { width: 20px; height: 20px; image-rendering: pixelated; float: left; margin-right: 4px; }
+  .ticket .pat { height: 5px; background: #e0c9a0; border-radius: 3px; margin-top: 3px; overflow: hidden; }
+  .ticket .pat i { display: block; height: 100%; background: #58b368; border-radius: 3px; }
+  .ticket .pat i.low { background: #e0483e; }
+  .ticket .price { color: #8a6d1f; font-weight: bold; }
+  #cookPanel { min-width: 190px; text-align: right; }
+  #cookPanel .st { font-size: 12px; color: #ffe9b0; margin-top: 3px; white-space: nowrap; }
+  #cookPanel .bar { height: 6px; background: #5a3a1a; border-radius: 3px; margin-top: 2px; overflow: hidden; }
+  #cookPanel .bar i { display: block; height: 100%; background: #ffb63c; }
+  #cookPanel .idle { color: #b99b6b; }
+
+  #midHud { text-align: center; }
+  #timer { font-size: 26px; font-weight: bold; color: #fff; text-shadow: 0 2px 0 #7a2d00, 0 0 12px rgba(255,180,60,.6); }
+  #timer.low { color: #ff5a4a; }
+  #scoreLine { font-size: 14px; color: #ffe9b0; margin-top: 1px; }
+  #scoreLine b { color: #ffd23c; }
+  #combo { font-size: 13px; color: #ffb63c; font-weight: bold; }
+  #hearts { font-size: 16px; letter-spacing: 2px; margin-top: 1px; }
+  #handBar { margin-top: 4px; font-size: 12px; color: #ffe9b0; }
+  #handBar .slot { display: inline-block; background: rgba(255,255,255,.14); border: 1px dashed #c98f3d;
+    border-radius: 6px; padding: 2px 7px; margin: 0 2px; min-width: 52px; }
+  #handBar .slot.full { background: #7a4d00; border-style: solid; color: #ffd23c; }
+  #plateBar { margin-top: 3px; font-size: 12px; }
+  #plateBar .ready { color: #7dff8a; font-weight: bold; }
+  #plateBar .mid { color: #ffd23c; }
+
+  /* ---------- speech bubbles ---------- */
+  #bubbles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 4; }
+  .bubble { position: absolute; transform: translate(-50%, -100%); background: #fffdf4; color: #3a2a12;
+    border: 2px solid #8a6a35; border-radius: 10px; padding: 3px 7px; font-size: 12px; font-weight: bold;
+    white-space: nowrap; box-shadow: 0 3px 8px rgba(0,0,0,.4); }
+  .bubble:after { content: ''; position: absolute; left: 50%; bottom: -9px; margin-left: -7px;
+    border: 7px solid transparent; border-top-color: #fffdf4; border-bottom: 0; }
+  .bubble small { display: block; font-size: 11px; color: #8a6d3b; font-weight: normal; }
+  .bubble .bpat { height: 4px; background: #eadfc2; border-radius: 2px; margin-top: 3px; overflow: hidden; }
+  .bubble .bpat i { display: block; height: 100%; background: #58b368; }
+  .bubble.happy { background: #fff8d0; border-color: #d9a441; }
+
+  /* ---------- overlays ---------- */
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; background: rgba(20, 10, 2, 0.55); z-index: 10; text-align: center; padding: 20px; }
+  .overlay.hidden { display: none; }
+  .bigtitle { font-size: 64px; font-weight: 900; color: #ffd23c; letter-spacing: 2px;
+    text-shadow: 0 4px 0 #7a4d00, 0 8px 24px rgba(0,0,0,.7); line-height: 1; }
+  .subtitle { font-size: 20px; color: #fff3d6; margin-top: 8px; text-shadow: 0 2px 6px rgba(0,0,0,.8); }
+  .howto { margin-top: 18px; background: rgba(30,18,8,.85); border: 2px solid #c98f3d; border-radius: 12px;
+    padding: 12px 18px; font-size: 14px; line-height: 1.7; color: #ffe9b0; text-align: left; }
+  .howto b { color: #ffd23c; }
+  .btn { margin-top: 20px; pointer-events: auto; cursor: pointer; font-size: 22px; font-weight: bold;
+    color: #4a2c00; background: linear-gradient(#ffd94d, #ffb63c); border: 3px solid #7a4d00; border-radius: 14px;
+    padding: 12px 34px; box-shadow: 0 5px 0 #7a4d00, 0 8px 18px rgba(0,0,0,.5); font-family: inherit; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #7a4d00; }
+  #endStats { font-size: 18px; color: #ffe9b0; line-height: 1.9; margin-top: 10px; }
+  #endStats b { color: #ffd23c; font-size: 22px; }
+  #hint { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: 12px;
+    color: rgba(255,233,176,.85); text-shadow: 0 1px 3px #000; z-index: 5; pointer-events: none; }
+  #toast { position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); font-size: 30px;
+    font-weight: 900; color: #ffd23c; text-shadow: 0 3px 0 #7a4d00, 0 6px 18px rgba(0,0,0,.7);
+    opacity: 0; transition: opacity .25s; z-index: 6; pointer-events: none; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="hud">
+  <div class="panel" id="ordersPanel">
+    <h2>ORDERS</h2>
+    <div id="tickets"></div>
+  </div>
+  <div class="panel" id="midHud">
+    <div id="timer">3:00</div>
+    <div id="scoreLine">Skor <b id="score">0</b> &nbsp;•&nbsp; Koin <b id="coins">0</b></div>
+    <div id="combo"></div>
+    <div id="hearts">❤❤❤</div>
+    <div id="handBar"></div>
+    <div id="plateBar"></div>
+  </div>
+  <div class="panel" id="cookPanel">
+    <h2>COOKING</h2>
+    <div id="cookList"></div>
+  </div>
+</div>
+
+<div id="bubbles"></div>
+<div id="toast"></div>
+
+<div class="overlay" id="titleScreen">
+  <div class="bigtitle">DAPUR CERIA</div>
+  <div class="subtitle">🍳 game masak 3D &nbsp;•&nbsp; restoranmu, pesananmu, waktumu 🍳</div>
+  <div class="howto">
+    <b>1.</b> Klik crate bahan di dapur (tomat, selada, ikan, roti, patty) — tangan max 3<br>
+    <b>2.</b> Masak: talenan 3 dtk • kompor ikan 7 dtk / patty 6 dtk • panci sup 6 dtk<br>
+    <b>3.</b> Klik meja saji di kiri untuk merakit piring, lalu klik pelanggan yang cocok<br>
+    <b>4.</b> Sajikan cepat biar combo naik sampai x5 — jangan sampai pelanggan kehabisan sabar!
+  </div>
+  <button class="btn" id="startBtn">▶ &nbsp;MULAI MASAK</button>
+  <div style="margin-top:14px;font-size:13px;color:#ffe9b0">Mouse klik • 1-4 pilih stasiun • Space pakai • P jeda • M suara • R ulang</div>
+</div>
+
+<div class="overlay hidden" id="endScreen">
+  <div class="bigtitle" style="font-size:52px">WAKTU HABIS!</div>
+  <div id="endStats"></div>
+  <button class="btn" id="againBtn">↻ &nbsp;MAIN LAGI</button>
+</div>
+
+<div id="hint">Klik crate → masak di stasiun → rakit di meja saji → sajikan ke pelanggan &nbsp;|&nbsp; 1-4 stasiun • Space pakai • P jeda • M suara • R ulang</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
