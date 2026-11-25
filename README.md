@@ -1,8 +1,8 @@
 # 🍳 Dapur Ceria — Game Masak 3D
 
-[![make.fun](https://make.fun/badge/best-cooking-game-20261125-0137.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
-[![rank](https://make.fun/badge/best-cooking-game-20261125-0137/rank.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
-[![reward](https://make.fun/badge/best-cooking-game-20261125-0137/reward.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
+[![make.fun](https://make.fun/badge/best-cooking-game-20261125-0137/Fattih210494/best-cooking-game-20261125-v2.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
+[![rank](https://make.fun/badge/best-cooking-game-20261125-0137/Fattih210494/best-cooking-game-20261125-v2/rank.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
+[![reward](https://make.fun/badge/best-cooking-game-20261125-0137/Fattih210494/best-cooking-game-20261125-v2/reward.svg)](https://make.fun/bounty/best-cooking-game-20261125-0137)
 
 A complete, original 3D cooking game for the [make.fun bounty](https://make.fun/bounty/best-cooking-game-20261125-0137) — run your own tiny restaurant in a warm low-poly 3D dining room. Take orders, chop, grill, simmer, plate, and serve before your customers lose patience.
 
